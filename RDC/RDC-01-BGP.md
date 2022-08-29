@@ -6,25 +6,8 @@
 - Utilise TCP pour envoyer les messages de routage (OSPF lui utilisait directement la couche IP)
 - Data Plain = traffic de data
 - Control plain = traffic de controle sur le réseau
-
-| L2 | IP | TCP | BGP |
-
 - BGP a pour but de trouver tous les chemins possibles. Vu que l'interieur d'un AS n'est pas révélé trouver un chemin optimal est impossible.
 
-Pour chaque AS BGP distingue :
-
-|                 |                                          |
-|-----------------|------------------------------------------|
-| local traffic   | traffic with source or destination in AS |
-| transit traffic |                                          |
-|                 |                                          |
-|                 |                                          |
-|                 |                                          |
-
-Chaque AS a :
-
-- Un BGP speaker qui annonce :
-    - A remplir
 
 ## BGP terminology
 
@@ -33,22 +16,62 @@ Chaque AS a :
 - NLRI/prefix
     - Reachable information for a IP address & netmask
 - Router-ID
+    - Highest IP address configured on the router
 - Route/path
-    - Chemin vers le voisin 
+    - NLRI advertised by a neighbor
 
 ## Protocol basics 
 
-### Types de messages
+- Runs over TCP
+- Incremental updates
+
+# AS
+
+- Identifié par son AS number
+- Il existe des numéros public et privé d'AS
+
+## AS Path
+
+- Sequences d'AS qu'une route a traversée
+- Détection des boucles
+- Applications des règles
+
+### AS-path loop detection
+
+- Updates which have looped through the network and returned to the same node are easily detected and discarded.
+
+Pour chaque AS BGP distingue :
+
+|                 |                                                            |
+|-----------------|------------------------------------------------------------|
+| local traffic   | traffic with source or destination in AS                   |
+| transit traffic | Traffic that passes through the AS                         |
+| Stub AS         | has connection to only one AS only carry local traffic     |
+| Multihomed AS   | has connection to >1 AS but does not carry transit traffic |
+| Transit AS      | has connection to >1 AS and carries transit traffic        |
+
+Each AS has :
+
+- One BGP speaker that advertise:
+    - Local Network
+    - other reachable network 
+    - give path information
+
+
+### Messages types
    
-- Open
-- Update
-- KeepAlive
-- Notification
+- Open : to negotiate and establish peering
+- Update : to exchange routing information
+- KeepAlive : to maintain peering session
+- Notification : to report errors
 
 ### Basic operation of BGP
 
 - Each AS as a set of NLRI
 - NLRI are exchanged between users
+- Can have multiple paths for a given prefix
+- Picks ther best path and installs in the IP forwarding table
+- Policies applied influences BGP path selection
 
 ## BGPpeers
 
@@ -62,12 +85,12 @@ Chaque AS a :
 ### BGP attributes
 
 - Les routes apprisent via BGP ont des propriétés associées utilisée pour déterminer la meilleure routes.
-    - Origin
-    - AS Path
-    - Next hop
-    - Local preference
-    - Multi-Exit discriminator
-    - Community
+    - Origin : Indique comment BGP a connu la route
+    - AS Path : Séquence d'AS traversés
+    - Next hop : Addresse utilisée pour atteindre le routeur
+    - Local preference : Sortie préférée pour l'AS local
+    - Multi-Exit discriminator : Utilisé en tant que suggestion pour un AS externe pour la route préferré
+    - Community : regroupe les destinations
 
 ### BGP Updates
 
@@ -104,16 +127,6 @@ Une fois les process IN et OUT fait on installe les routes dans la FIB (avec le 
 - Nature autonome des domaines
 - Problèmes de confiance dans les systèmes autonomes voisins
 
-## AS Path
-
-- Sequences d'AS qu'une route a traversée
-- Détection des boucles
-- Applications des règles
-
-### AS-path loop detection
-
-
-
 #### Pq avons nous besoins d'un protocole de routage externe
 
 - Scaling to large network
@@ -130,12 +143,6 @@ Une fois les process IN et OUT fait on installe les routes dans la FIB (avec le 
 
 - Intra-AS : gérer la performance
 - Inter-AS : La politique peut gouverner au dessus de la performance.
-
-
-## AS
-
-- Identifié par son AS number
-- Il existe des numéros public et privé d'AS
 
 ### Terminologie
 
@@ -162,7 +169,7 @@ Basé sur :
 
 ### Types de routes
 
-- Static
+- Static : Configurée manuellement
 - Connectées : Créée automatiquement quand une interface est up
 - Intérieure : Route interne dans un AS
 - Externe : Route externe à un AS
@@ -170,4 +177,3 @@ Basé sur :
 ### Longest prefix matching
 
 On prend tjrs le prefixe le plus long lors d'un choix de route (/24 sera choisi au dessus du /16)
-
